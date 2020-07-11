@@ -15,6 +15,7 @@ public class ProcessConcertsList {
     static final Map<String, String> country = new HashMap<>();
     static final Set<String> visitedCities = new HashSet<>();
     static final Set<String> visitedBands = new HashSet<>();
+    static String password = "";
 
     static {
         country.put("CH", "Schweiz");
@@ -37,8 +38,8 @@ public class ProcessConcertsList {
 
     public static void main(String[] args) throws Exception {
         Class.forName("org.postgresql.Driver");
-        boolean reset = false;
-        try ( BaseConnection connection = (BaseConnection) DriverManager.getConnection("jdbc:postgresql://localhost:5432/ea80", "postgres", "KwiTiU07")) {
+        boolean reset = false; // set to true to drop all tables and recreate the DB schema.
+        try ( BaseConnection connection = (BaseConnection) DriverManager.getConnection("jdbc:postgresql://localhost:5432/ea80", "postgres", password)) {
             if (reset) {
                 Statement stmt = connection.createStatement();
                 stmt.executeUpdate("DELETE FROM concert");
@@ -51,7 +52,6 @@ public class ProcessConcertsList {
             printToWikiTable(connection);
             printStatisticsForCity(connection);
             printStatisticsForBand(connection);
-
         }
     }
 
