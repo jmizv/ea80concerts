@@ -19,6 +19,7 @@ public class ProcessConcertsList {
     static {
         country.put("CH", "Schweiz");
         country.put("AT", "Österreich");
+        country.put("NL", "Niederlande");
     }
 
     private static String formatCity(String city) {
@@ -36,17 +37,17 @@ public class ProcessConcertsList {
 
     public static void main(String[] args) throws Exception {
         Class.forName("org.postgresql.Driver");
+        boolean reset = false;
         try ( BaseConnection connection = (BaseConnection) DriverManager.getConnection("jdbc:postgresql://localhost:5432/ea80", "postgres", "KwiTiU07")) {
+            if (reset) {
+                Statement stmt = connection.createStatement();
+                stmt.executeUpdate("DELETE FROM concert");
+                stmt.executeUpdate("DELETE FROM venue");
+                stmt.executeUpdate("DELETE FROM city");
+                stmt.executeUpdate("DELETE FROM band");
 
-            /*
-            Statement stmt = connection.createStatement();
-            stmt.executeUpdate("DELETE FROM concert");
-            stmt.executeUpdate("DELETE FROM venue");
-            stmt.executeUpdate("DELETE FROM city");
-            stmt.executeUpdate("DELETE FROM band");
-
-            insertEntries(connection);
-            //*/
+                insertEntries(connection);
+            }
             printToWikiTable(connection);
             printStatisticsForCity(connection);
             printStatisticsForBand(connection);
@@ -58,7 +59,6 @@ public class ProcessConcertsList {
         PreparedStatement stmt = connection.prepareCall("CALL createConcert(?,?,?,?,?,?,?)");
         PreparedStatement getLastInsert = connection.prepareCall("SELECT max(id) FROM concert");
         PreparedStatement updateDateFormat = connection.prepareCall("UPDATE concert SET dateformat=? WHERE id=?");
-        String createCountry = null;
         for (String[] line : getLines()) {
             stmt.clearParameters();
             stmt.setString(1, line[0]);
@@ -126,14 +126,14 @@ public class ProcessConcertsList {
 
     private static void printStatisticsForCity(BaseConnection conn) throws SQLException, IOException {
         printStatistic(conn,
-                "SELECT count(*), city.name FROM concert c,venue v,city WHERE c.venueid=v.id and v.cityid=city.id GROUP BY city.name ORDER BY 1 DESC",
+                "SELECT count(*), city.name FROM concert c,venue v,city WHERE c.venueid=v.id and v.cityid=city.id GROUP BY city.name ORDER BY 1,2 DESC",
                 "Ort"
         );
     }
 
     private static void printStatisticsForBand(BaseConnection conn) throws SQLException, IOException {
         printStatistic(conn,
-                "select count(*), b.name from (select unnest(otherbands) \"id\" from concert)c,band b WHERE c.id=b.id group by b.id order by 1 desc",
+                "select count(*), b.name from (select unnest(otherbands) \"id\" from concert)c,band b WHERE c.id=b.id group by b.id order by 1,2 desc",
                 "Band"
         );
     }
@@ -148,7 +148,7 @@ public class ProcessConcertsList {
             sb.append("| ").append(executeQuery.getString(2)).append("\n");
             sb.append("| ").append(executeQuery.getInt(1)).append("\n");
             sb.append("|-").append("\n");
-            if (counter >= 5) {
+            if (counter >= 10) {
                 break;
             }
         }
@@ -185,12 +185,16 @@ public class ProcessConcertsList {
             sb.append("| ").append(formatCity(executeQuery.getString(2))).append("\n");
             sb.append("| ").append(formatVenue(executeQuery.getString(3))).append("\n");
             sb.append("| ").append(createBand(bandCache, executeQuery.getArray(4))).append("\n");
-            sb.append("| ").append(executeQuery.getString(5)).append("\n");
+            String canceled = executeQuery.getString(5);
+            if ("ja".equals(canceled)) {
+                --counter;
+            }
+            sb.append("| ").append(canceled).append("\n");
             sb.append("|-").append("\n");
         }
         sb.delete(sb.length() - 3, sb.length());
         sb.append("|}").append("\n");
-        sb.insert(0, " Konzerte:\n\n").insert(0, counter).insert(0, "Bisher sind es ");
+        sb.insert(0, " Konzerte stattgefunden:\n\n").insert(0, counter).insert(0, "Bisher haben ");
         System.out.println(counter + " Concerts");
         output(sb, "../data/ea80concerts.txt");
     }
