@@ -1,9 +1,9 @@
-Bisher haben 233 Konzerte stattgefunden:
+Bisher haben 232 Konzerte stattgefunden:
 
 | Datum | Ort | Venue | Andere Bands | Abgesagt? |
 |-------|-----|-------|--------------|-----------|
 | **2023** |
-| 18.02.2023 | Jena | Casablanca | Alien Fight Club |  |
+| 18.02.2023 | Jena | Casablanca | Alien Fight Club | ja |
 | **2020** |
 | 01.05.2020 | Köln | Sonic Ballroom |  | ja |
 | 04.04.2020 | Zürich/CH | Rote Fabrik | DE_BRIS, LOESCHEN | ja |
